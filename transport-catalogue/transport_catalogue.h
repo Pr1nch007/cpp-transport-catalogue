@@ -24,11 +24,11 @@ struct Bus{
 
 class TransportCatalogue {
 	public:
-    void AddStop(Stop stop_new);
+    void AddStop(const Stop& stop_new);
     
     Stop* FindStop(std::string_view name_stop) const;
     
-    void AddBus(Bus bus_new);
+    void AddBus(const Bus& bus_new);
     
     Bus* FindBus(std::string_view name_bus) const;
     
