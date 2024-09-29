@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iterator>
+#include <utility>
 
 using namespace std;
 
@@ -28,6 +29,23 @@ geo::Coordinates Coordinates(std::string_view str) {
     return {lat, lng};
 }
 
+vector<pair<int, string>> DistanceToStop (string_view str){
+    vector<pair<int, string>> distance_to_stop;
+    auto comma = str.find(',');
+
+    while((comma = str.find_first_of(',', comma + 1)) != str.npos){
+    auto first_dist = str.find_first_not_of(' ', comma + 1);
+    auto metr = str.find_first_of('m', first_dist);
+    
+    auto first_stop = metr + 5;
+    auto comma_2 = str.find_first_of(',', first_stop);
+    
+    int dist = std::stod(std::string(str.substr(first_dist, metr - first_dist)));
+    std::string stop = std::string(str.substr(first_stop, comma_2 - first_stop));
+    distance_to_stop.push_back({dist, stop});
+    }
+    return distance_to_stop;
+}
     
 namespace detail{
 /**
@@ -117,6 +135,13 @@ void InputReader::ApplyCommands([[maybe_unused]] catalogue::TransportCatalogue& 
             stop.name = std::move(i.id);
             stop.coord = std::move(parse::Coordinates(i.description));
             catalogue.AddStop(std::move(stop));
+        }
+    }
+    for(auto i : commands_){
+        if(i.command == "Stop"s){
+            for(auto [dist, stop] : parse::DistanceToStop(i.description)){
+                catalogue.AddDistance(i.id, stop, dist);
+            }
         }
     }
     for(auto i : commands_){

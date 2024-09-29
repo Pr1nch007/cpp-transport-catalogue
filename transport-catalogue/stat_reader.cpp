@@ -5,7 +5,6 @@
 #include <set>
 #include <string>
 
-
 using namespace std;
 
 namespace print{
@@ -20,7 +19,8 @@ void PrintInfoBus(const catalogue::TransportCatalogue& tansport_catalogue, std::
     }
     
     catalogue::Bus bus = *tansport_catalogue.FindBus(name_bus);
-    double dist = 0.0;
+    int fact_dist = 0;
+    double geo_dist = 0.0;
     set<string_view> unique_stop;
     
     for(size_t i = 0; i < bus.stops.size(); ++i){
@@ -30,10 +30,13 @@ void PrintInfoBus(const catalogue::TransportCatalogue& tansport_catalogue, std::
             continue;
         }
         
-        dist += geo::ComputeDistance(bus.stops[i-1]->coord, bus.stops[i]->coord);
+        geo_dist += geo::ComputeDistance(bus.stops[i-1]->coord, bus.stops[i]->coord);
+        fact_dist += tansport_catalogue.FindDistance(bus.stops[i-1]->name, bus.stops[i]->name);
     }
     
-    output << "Bus "s << name_bus << ": "s << bus.stops.size() << " stops on route, "s << unique_stop.size() << " unique stops, "s << dist << " route length"s << endl;
+    double curv = static_cast<double>(fact_dist) / geo_dist;
+    
+    output << "Bus "s << name_bus << ": "s << bus.stops.size() << " stops on route, "s << unique_stop.size() << " unique stops, "s << fact_dist << " route length, "s << curv << " curvature"s << endl;
 }
     
 void PrintInfoStop(const catalogue::TransportCatalogue& tansport_catalogue, std::string_view name_stop,
@@ -65,8 +68,8 @@ void ParseAndPrintStat(const catalogue::TransportCatalogue& tansport_catalogue, 
     auto space_pos = request.find(' ');
     auto not_space = request.find_first_not_of(' ', space_pos);
     
-    string command = move(string(request.substr(0, space_pos)));
-    string name_bus_or_stop = move(string(request.substr(not_space, colon_pos - not_space + 1)));
+    string command = string(request.substr(0, space_pos));
+    string name_bus_or_stop = string(request.substr(not_space, colon_pos - not_space + 1));
     if(command == "Bus"s){
         detail::PrintInfoBus(tansport_catalogue, name_bus_or_stop, output);
     }else{

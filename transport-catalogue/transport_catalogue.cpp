@@ -46,4 +46,26 @@ set<string_view> TransportCatalogue::GetStopInfo(string_view name_stop) const{
         }
         return buses_to_stop;
 }
+    
+void TransportCatalogue::AddDistance(string_view from_stop, string_view to_stop, int distance){
+    distance_to_stops_[make_pair(FindStop(from_stop), FindStop(to_stop))] = distance;
+}
+    
+int TransportCatalogue::FindDistance(string_view from_stop, string_view to_stop) const{
+    auto stop1 = FindStop(from_stop);
+    auto stop2 = FindStop(to_stop);
+    auto dist = distance_to_stops_.find(make_pair(stop1, stop2));
+    
+    if(dist == distance_to_stops_.end()){
+        auto dist2 = distance_to_stops_.find(make_pair(stop2, stop1));
+        
+        if(dist2 == distance_to_stops_.end()){
+            return 0;
+        }
+        
+        return dist2->second;
+    }
+    
+    return dist->second;
+}
 }
