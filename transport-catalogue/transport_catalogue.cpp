@@ -13,9 +13,11 @@ void TransportCatalogue::AddStop(const Stop& stop_new){
 
 Stop* TransportCatalogue::FindStop(string_view name_stop) const{
     auto stop_iter = stop_quest_.find(name_stop);
+    
     if(stop_iter == stop_quest_.end()){
         return nullptr;
     }
+    
     return stop_iter->second;
 }
 
@@ -26,19 +28,23 @@ void TransportCatalogue::AddBus(const Bus& bus_new){
 
 Bus* TransportCatalogue::FindBus(string_view name_bus) const{
     auto bus_iter = bus_quest_.find(name_bus);
+    
     if(bus_iter == bus_quest_.end()){
         return nullptr;
     }
+    
     return bus_iter->second;
 }
 
 set<string_view> TransportCatalogue::GetStopInfo(string_view name_stop) const{
     auto stop = FindStop(name_stop);
         set<string_view> buses_to_stop;
+    
         if(stop == nullptr){
             return {};
         }else{
             for(auto& i : buses_){
+                
                 if(find(i.stops.begin(), i.stops.end(), stop) != i.stops.end()){
                     buses_to_stop.insert(i.name);
                 }
@@ -68,4 +74,25 @@ int TransportCatalogue::FindDistance(string_view from_stop, string_view to_stop)
     
     return dist->second;
 }
+    
+    std::set<Stop*> TransportCatalogue::GetStopsInRoutes() const {
+        std::set<Stop*> stops_in_routes;
+        
+        for (const auto& [name, bus] : bus_quest_) {
+            
+            if(bus->stops.empty()) continue;
+            
+            for (const auto& stop : bus->stops) {
+                
+                if(FindStop(stop->name) == nullptr) continue;
+                stops_in_routes.insert(stop);
+            }
+        }
+        return stops_in_routes;
+    }
+
+    const std::map<std::string_view, Bus*>& TransportCatalogue::GetAllBuses() const{
+        return bus_quest_;
+    }
+    
 }

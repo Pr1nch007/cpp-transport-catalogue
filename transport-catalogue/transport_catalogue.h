@@ -1,6 +1,7 @@
 #pragma once
 
 #include <deque>
+#include <map>
 #include <set>
 #include <string>
 #include <string_view>
@@ -9,18 +10,11 @@
 #include <utility>
 
 #include "geo.h"
+#include "domain.h"
 
 namespace catalogue{
 
-struct Stop{
-    std::string name;
-    geo::Coordinates coord;
-};
-
-struct Bus{
-    std::string name;
-    std::vector<Stop*> stops;
-};    
+using namespace domain;
     
 template<typename T>
 class HashPairPoint{
@@ -48,11 +42,15 @@ class TransportCatalogue {
     
     int FindDistance(std::string_view from_stop, std::string_view to_stop)const;
     
+    std::set<Stop*> GetStopsInRoutes() const;
+
+    const std::map<std::string_view, Bus*>& GetAllBuses() const;
+    
     private:
     std::deque<Stop> stops_;
     std::unordered_map<std::string_view, Stop*> stop_quest_;
     std::deque<Bus> buses_;
-    std::unordered_map<std::string_view, Bus*> bus_quest_;
+    std::map<std::string_view, Bus*> bus_quest_;
     std::unordered_map<std::pair<Stop*, Stop*>, int, HashPairPoint<Stop>> distance_to_stops_;
 };
 }
