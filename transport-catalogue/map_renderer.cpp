@@ -6,7 +6,7 @@ namespace map_renderer{
     
     bool IsZero(double value) {
     return std::abs(value) < EPSILON;
-}
+    }
     
     svg::Point SphereProjector::operator()(geo::Coordinates coords) const {
         return {
@@ -15,7 +15,7 @@ namespace map_renderer{
         };
     }
     
-    void MapRenderer::operator()(RenderSettings settings){
+    void MapRenderer::operator()(RenderSettings settings) {
         settings_ = std::move(settings);
     }
     

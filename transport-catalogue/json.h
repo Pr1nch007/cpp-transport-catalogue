@@ -19,22 +19,15 @@ class ParsingError : public std::runtime_error {
 public:
     using runtime_error::runtime_error;
 };
-
-class Node {
+    
+using Value = std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>;
+    
+class Node : Value {
 public:
-    using Value = std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>;
-        
-    Node();
-    Node(std::nullptr_t);
-    Node(const Array& array);
-    Node(const Dict& dict);
-    Node(bool b);
-    Node(int i);
-    Node(double d);
-    Node(const std::string& str);
-    
+    using Value::Value; 
+
     const Value& GetValue() const;
-    
+
     bool IsNull() const;
     bool IsArray() const;
     bool IsMap() const;
@@ -43,19 +36,22 @@ public:
     bool IsPureDouble() const;
     bool IsDouble() const;
     bool IsString() const;
-    
-    const Array& AsArray() const;
-    const Dict& AsMap() const;
-    bool AsBool() const;
-    int AsInt() const;
-    double AsDouble() const;
-    const std::string& AsString() const;
-    
-    bool operator==(const Node& other) const;
-    bool operator!=(const Node& other) const;
 
-private:
-    Value value_;
+    const Array& AsArray() const;
+
+    const Dict& AsMap() const;
+
+    bool AsBool() const;
+
+    int AsInt() const;
+
+    double AsDouble() const;
+
+    const std::string& AsString() const;
+
+    bool operator==(const Node& other) const;
+
+    bool operator!=(const Node& other) const;
 };
 
 class Document {

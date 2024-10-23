@@ -11,11 +11,11 @@ using Number = std::variant<int, double>;
 Node LoadNode(std::istream& input);
 
 Number LoadNumber(std::istream& input) {
-
     std::string parsed_num;
 
     auto read_char = [&parsed_num, &input] {
         parsed_num += static_cast<char>(input.get());
+        
         if (!input) {
             throw ParsingError("Failed to read number from stream"s);
         }
@@ -25,6 +25,7 @@ Number LoadNumber(std::istream& input) {
         if (!std::isdigit(input.peek())) {
             throw ParsingError("A digit is expected"s);
         }
+        
         while (std::isdigit(input.peek())) {
             read_char();
         }
@@ -49,9 +50,11 @@ Number LoadNumber(std::istream& input) {
 
     if (int ch = input.peek(); ch == 'e' || ch == 'E') {
         read_char();
+        
         if (ch = input.peek(); ch == '+' || ch == '-') {
             read_char();
         }
+        
         read_digits();
         is_int = false;
     }
@@ -74,6 +77,7 @@ std::string LoadString(std::istream& input) {
     auto it = std::istreambuf_iterator<char>(input);
     auto end = std::istreambuf_iterator<char>();
     std::string s;
+    
     while (true) {
         if (it == end) {
             throw ParsingError("String parsing error"s);
@@ -120,9 +124,11 @@ std::string LoadString(std::istream& input) {
 
 bool LoadBool(std::istream& input) {
     std::string parsed;
+    
     while (std::isalpha(input.peek())) {
         parsed += static_cast<char>(input.get());
     }
+    
     if (parsed == "true"s) {
         return true;
     } else if (parsed == "false"s) {
@@ -134,24 +140,29 @@ bool LoadBool(std::istream& input) {
 
 Node LoadNull(std::istream& input) {
     std::string parsed;
+    
     while (std::isalpha(input.peek())) {
         parsed += static_cast<char>(input.get());
     }
     if (parsed != "null"s) {
         throw ParsingError("Failed to parse null value"s);
     }
+    
     return Node{nullptr};
 }
 
 Array LoadArray(std::istream& input) {
     Array result;
     char ch;
+    
     if (!(input >> ch) || ch != '[') {
         throw ParsingError("Array must start with '['"s);
     }
+    
     for (char c = input.peek(); c != ']'; c = input.peek()) {
         result.push_back(LoadNode(input));
         input >> std::ws; 
+        
         if (input.peek() == ',') {
             input.get();
         }
@@ -163,20 +174,24 @@ Array LoadArray(std::istream& input) {
 Dict LoadDict(std::istream& input) {
     Dict result;
     char ch;
+    
     if (!(input >> ch) || ch != '{') {
         throw ParsingError("Dict must start with '{'"s);
     }
+    
     for (char c = input.peek(); c != '}'; c = input.peek()) {
         input >> std::ws; 
         input >> c;
         std::string key = LoadString(input); 
         input >> std::ws;
+        
         if (input.get() != ':') {
             throw ParsingError("Expected ':' after key in dict"s);
         }
         input >> std::ws;
         result[std::move(key)] = LoadNode(input);
         input >> std::ws;
+        
         if (input.peek() == ',') {
             input.get(); 
         }
@@ -188,6 +203,7 @@ Dict LoadDict(std::istream& input) {
 Node LoadNode(std::istream& input) {
     input >> std::ws; 
     char ch = input.peek();
+    
     if (ch == '[') {
         return LoadArray(input);
     } else if (ch == '{') {
@@ -197,6 +213,7 @@ Node LoadNode(std::istream& input) {
         return Node(LoadString(input));
     } else if (std::isdigit(ch) || ch == '-' || ch == '.') {
         auto number = LoadNumber(input);
+        
         if (std::holds_alternative<int>(number)) {
             return Node(std::get<int>(number));
         } else {
@@ -211,80 +228,65 @@ Node LoadNode(std::istream& input) {
     }
 }
 
-}  // load
+}  // load    
     
-Node::Node() : value_(nullptr) {}
-Node::Node(std::nullptr_t) : value_(nullptr) {}
-Node::Node(const Array& array) : value_(array) {}
-Node::Node(const Dict& dict) : value_(dict) {}
-Node::Node(bool b) : value_(b) {}
-Node::Node(int i) : value_(i) {}
-Node::Node(double d) : value_(d) {}
-Node::Node(const std::string& str) : value_(str) {}
-
-const Node::Value& Node::GetValue() const {
-        return value_; 
+    
+const Value& Node::GetValue() const {
+        return *this;
     }
-    
-bool Node::IsNull() const {
-    return std::holds_alternative<std::nullptr_t>(value_); 
-}
-bool Node::IsArray() const {
-    return std::holds_alternative<Array>(value_); 
-}
-bool Node::IsMap() const {
-    return std::holds_alternative<Dict>(value_); 
-}
-bool Node::IsBool() const {
-    return std::holds_alternative<bool>(value_); 
-}
-bool Node::IsInt() const {
-    return std::holds_alternative<int>(value_); 
-}
-bool Node::IsPureDouble() const {
-    return std::holds_alternative<double>(value_); 
-}
-bool Node::IsDouble() const {
-    return IsPureDouble() || IsInt(); 
-}
-bool Node::IsString() const {
-    return std::holds_alternative<std::string>(value_); 
-}
-    
+
+    // Методы для проверки типа данных
+bool Node::IsNull() const { return std::holds_alternative<std::nullptr_t>(*this); }
+bool Node::IsArray() const { return std::holds_alternative<Array>(*this); }
+bool Node::IsMap() const { return std::holds_alternative<Dict>(*this); }
+bool Node::IsBool() const { return std::holds_alternative<bool>(*this); }
+bool Node::IsInt() const { return std::holds_alternative<int>(*this); }
+bool Node::IsPureDouble() const { return std::holds_alternative<double>(*this); }
+bool Node::IsDouble() const { return IsPureDouble() || IsInt(); }
+bool Node::IsString() const { return std::holds_alternative<std::string>(*this); }
+
+    // Методы для получения значения определенного типа
 const Array& Node::AsArray() const {
     if (!IsArray()) throw std::logic_error("No vector"s);
-    return std::get<Array>(value_);
+    return std::get<Array>(*this);
 }
+
 const Dict& Node::AsMap() const {
     if (!IsMap()) throw std::logic_error("No map"s);
-    return std::get<Dict>(value_);
+    return std::get<Dict>(*this);
 }
+
 bool Node::AsBool() const {
     if (!IsBool()) throw std::logic_error("No bool"s);
-    return std::get<bool>(value_);
+    return std::get<bool>(*this);
 }
+
 int Node::AsInt() const {
-    if (!IsInt()) throw std::logic_error("NO int"s);
-    return std::get<int>(value_);
+    if (!IsInt()) throw std::logic_error("No int"s);
+    return std::get<int>(*this);
 }
+
 double Node::AsDouble() const {
     if (!IsDouble()) throw std::logic_error("No double or int"s);
-    if(IsPureDouble()){
-        return std::get<double>(value_);
+    
+    if (IsPureDouble()) {
+        return std::get<double>(*this);
     } else {
-        return std::get<int>(value_);
+        return std::get<int>(*this);
     }
 }
+
 const std::string& Node::AsString() const {
     if (!IsString()) throw std::logic_error("No string"s);
-    return std::get<std::string>(value_);
+    return std::get<std::string>(*this);
 }
-    
+
 bool Node::operator==(const Node& other) const {
-    return value_ == other.value_;
+    return static_cast<const Value&>(*this) == static_cast<const Value&>(other);
 }
+
 bool Node::operator!=(const Node& other) const {
-    return value_ != other.value_;
+    return !(*this == other);
 }
     
 namespace print {
@@ -309,6 +311,7 @@ void PrintValue(bool value, std::ostream& out) {
 // Перегрузка для вывода строк
 void PrintValue(const std::string& value, std::ostream& out) {
     out << '"';
+    
     for (const char ch : value) {
         switch (ch) {
             case '\n':
@@ -339,6 +342,7 @@ void PrintValue(const Array& array, std::ostream& out) {
     out << "[\n"s;
     bool first = true;
     std::string indent_str(4, ' ');  
+    
     for (const auto& elem : array) {
         if (!first) {
             out << ",\n"s;
@@ -355,6 +359,7 @@ void PrintValue(const Dict& dict, std::ostream& out) {
     out << "{\n"s;
     bool first = true;
     std::string indent_str(4, ' ');  
+    
     for (const auto& [key, value] : dict) {
         if (!first) {
             out << ",\n"s;
@@ -371,6 +376,7 @@ void PrintNode(const Node& node, std::ostream& out) {
         [&out](const auto& value) { PrintValue(value, out); },
         node.GetValue());
 }
+
 } //print
     
 Document::Document()
@@ -380,7 +386,7 @@ Document::Document(Node root)
     : root_(std::move(root)) {}
     
 const Node& Document::GetRoot() const {
-        return root_;
+    return root_;
 }
     
 bool Document::operator==(const Document& other) const {

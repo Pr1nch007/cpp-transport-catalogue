@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <variant>
 
 #include "json.h"
 #include "request_handler.h"
@@ -9,7 +10,32 @@
 
 namespace reader{
     
-std::string ParseColor(const json::Node& color_node);
+struct Rgb {
+    int red;
+    int green;
+    int blue;
+};
+
+struct Rgba {
+    int red;
+    int green;
+    int blue;
+    double alpha;
+};
+    
+using Color = std::variant<std::monostate, std::string, Rgb, Rgba>;
+    
+struct ColorInString {
+    std::string operator()(std::monostate);
+
+    std::string operator()(std:: string color);
+
+    std::string operator()(Rgb color);
+
+    std::string operator()(Rgba color);
+};
+    
+Color ParseColor(const json::Node& color_node);
 
 std::vector<std::string> ParseColorPalette(const json::Array& color_palette_node);
 

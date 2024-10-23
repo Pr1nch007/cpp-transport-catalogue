@@ -10,7 +10,7 @@
 
 namespace svg {
     
-    using namespace std::literals;
+using namespace std::literals;
     
 using Color = std::string;
     
@@ -193,7 +193,7 @@ private:
     std::string data_;
 };
     
-class ObjectContainer{
+class ObjectContainer {
 public:
 template <typename Obj>
 void Add(Obj obj) {
@@ -207,13 +207,13 @@ protected:
 std::vector<std::unique_ptr<Object>> objects_;
 };
     
-class Drawable{
+class Drawable {
 public:
     virtual void Draw(ObjectContainer& svg_cont) const = 0;
     virtual ~Drawable() = default;
 }; 
 
-class Document final : public ObjectContainer{
+class Document final : public ObjectContainer {
 public:
     // Добавляет в svg-документ объект-наследник svg::Object
     void AddPtr(std::unique_ptr<Object>&& obj) override;

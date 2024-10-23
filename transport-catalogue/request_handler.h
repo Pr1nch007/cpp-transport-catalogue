@@ -30,11 +30,11 @@ public:
 
     void AddBus(const std::string& name, const std::vector<std::string>& stops, bool is_roundtrip);
 
-    std::optional<BusStat> GetBusStat(const std::string_view& bus_name) const;
+    std::optional<domain::BusStat> GetBusStat(const std::string_view& bus_name) const;
 
     const std::set<std::string_view> GetBusesByStop(const std::string_view& stop_name) const;
     
-    bool YesOrNoStop(const std::string_view& stop_name);
+    bool CheckStop(const std::string_view& stop_name);
     
     std::set<domain::Stop*> GetAllStops() const;
 

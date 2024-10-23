@@ -64,7 +64,7 @@ void Circle::RenderObject(const RenderContext& context) const {
 
 // ---------- Polyline ------------------
     
-Polyline& Polyline::AddPoint(Point point){
+Polyline& Polyline::AddPoint(Point point) {
     points_.push_back(point);
     return *this;
 }
@@ -74,7 +74,7 @@ void Polyline::RenderObject(const RenderContext& context) const {
     out << "<polyline points=\""sv;
     size_t x = 0;
     
-    for(auto& i : points_){
+    for(auto& i : points_) {
         ++x;
         out << i.x << ","sv << i.y;
         if(x != points_.size()){
@@ -89,47 +89,47 @@ void Polyline::RenderObject(const RenderContext& context) const {
     
 // ---------- Text ------------------
     
-Text& Text::SetPosition(Point pos){
+Text& Text::SetPosition(Point pos) {
     position_ = pos;
     return *this;
 }
 
-Text& Text::SetOffset(Point offset){
+Text& Text::SetOffset(Point offset) {
     offset_ = offset;
     return *this;
 }
     
-Text& Text::SetFontSize(uint32_t size){
+Text& Text::SetFontSize(uint32_t size) {
     size_ = size;
     return *this;
 }
 
-Text& Text::SetFontFamily(std::string font_family){
+Text& Text::SetFontFamily(std::string font_family) {
     font_family_ = font_family;
     return *this;
 }
 
-Text& Text::SetFontWeight(std::string font_weight){
+Text& Text::SetFontWeight(std::string font_weight) {
     font_weight_ = font_weight;
     return *this;
 }
 
-Text& Text::SetData(std::string data){
+Text& Text::SetData(std::string data) {
     data_ = data;
     return *this;
 }
 
-void Text::RenderObject(const RenderContext& context) const{
+void Text::RenderObject(const RenderContext& context) const {
     auto& out = context.out;
     out << "<text "s;
     RenderAttrs(context.out);
     
     out << " x=\""sv << position_.x << "\" y=\""sv << position_.y << "\" dx=\""sv << offset_.x << "\" dy=\""sv << offset_.y << "\" font-size=\""sv << size_;
     
-    if(!font_family_.empty()){
+    if(!font_family_.empty()) {
         out << "\" font-family=\""sv << font_family_;
     }
-    if(!font_weight_.empty()){
+    if(!font_weight_.empty()) {
         out << "\" font-weight=\""sv << font_weight_;
     }
     
@@ -139,15 +139,15 @@ void Text::RenderObject(const RenderContext& context) const{
     
 // ---------- Document ------------------
     
-void Document::AddPtr(std::unique_ptr<Object>&& obj){
+void Document::AddPtr(std::unique_ptr<Object>&& obj) {
     objects_.emplace_back(std::move(obj));
 }
     
-void Document::Render(std::ostream& out) const{
+void Document::Render(std::ostream& out) const {
     out << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"sv << std::endl;
     out << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">"sv << std::endl;
     
-    for(auto& i : objects_){
+    for(auto& i : objects_) {
         RenderContext ctx(out,2,2);
         i->Render(ctx);
     }

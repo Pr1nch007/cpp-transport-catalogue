@@ -168,7 +168,7 @@ private:
     void RenderStopCircles(const StopsRange& stops) {
         SphereProjector projector(stops.begin(), stops.end(), settings_.width, settings_.height, settings_.padding);
     
-      std::vector<domain::Stop*> sorted_stops(stops.begin(), stops.end());
+        std::vector<domain::Stop*> sorted_stops(stops.begin(), stops.end());
         std::sort(sorted_stops.begin(), sorted_stops.end(), [](const auto* lhs, const auto* rhs) {
             return lhs->name < rhs->name;
         });
