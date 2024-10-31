@@ -5,6 +5,7 @@
 #include <variant>
 
 #include "json.h"
+#include "json_builder.h"
 #include "request_handler.h"
 #include "map_renderer.h"
 
@@ -69,10 +70,10 @@ private:
     void AddDistance(const json::Node& request);
     void AddBus(const json::Node& request);
     
-    void GetInfoBus(const json::Node& request, json::Array& answers);
-    void GetInfoStop(const json::Node& request, json::Array& answers);
+    void GetInfoBus(const json::Node& request, json::Builder& builder);
+    void GetInfoStop(const json::Node& request, json::Builder& builder);
     
-    void RenderMapResponse(const json::Node& request, json::Array& answers);
+    void RenderMapResponse(const json::Node& request, json::Builder& builder);
 };
 
 }
