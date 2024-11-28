@@ -12,6 +12,7 @@
 
 #include "geo.h"
 #include "domain.h"
+#include "graph.h"
 
 namespace catalogue {
 
@@ -49,12 +50,18 @@ public:
 
     const std::map<std::string_view, Bus*>& GetAllBuses() const;
     
+    graph::DirectedWeightedGraph<double> BuildGraph(int bus_wait_time, double bus_velocity);
+    
+    size_t FindStopIndex(const std::string& stop_name) const;
+    
+    std::string_view GetStopToIndex (size_t id) const;
 private:
     std::deque<Stop> stops_;
     std::unordered_map<std::string_view, Stop*> stop_quest_;
     std::deque<Bus> buses_;
     std::map<std::string_view, Bus*> bus_quest_;
     std::unordered_map<std::pair<Stop*, Stop*>, int, HashPairPoint<Stop>> distance_to_stops_;
+    std::unordered_map<std::string_view, size_t> stop_to_index_;
 };
     
 }

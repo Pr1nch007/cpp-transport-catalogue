@@ -8,6 +8,7 @@
 #include "json_builder.h"
 #include "request_handler.h"
 #include "map_renderer.h"
+#include "transport_router.h"
 
 namespace reader{
     
@@ -50,7 +51,7 @@ int GetIdRequests(const json::Node& request);
 
 class JsonHandler {
 public:
-    JsonHandler(std::istream& input, handler::RequestHandler& handler, map_renderer::MapRenderer& renderer);
+    JsonHandler(std::istream& input, handler::RequestHandler& handler, map_renderer::MapRenderer& renderer, router::TransportRouter& router);
 
     void ProcessInput();
     
@@ -62,6 +63,7 @@ private:
     handler::RequestHandler& handler_;
     map_renderer::MapRenderer& renderer_;
     json::Document document_;
+    router::TransportRouter& router_;
     
     const json::Array& GetBaseRequests() const;
     const json::Array& GetStatRequests() const;
@@ -74,6 +76,10 @@ private:
     void GetInfoStop(const json::Node& request, json::Builder& builder);
     
     void RenderMapResponse(const json::Node& request, json::Builder& builder);
+    
+    router::RoutingSettings ProcessRoutingSettings(const json::Node& routing_settings) const;
+    
+    void ProcessRouteRequest(const json::Node& request, json::Builder& builder);
 };
-
+    
 }

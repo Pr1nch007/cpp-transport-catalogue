@@ -4,12 +4,14 @@
 #include "request_handler.h"
 #include "json_reader.h"
 #include "map_renderer.h"
+#include "transport_router.h"
 
 int main(){
     catalogue::TransportCatalogue catalogue;
     map_renderer::MapRenderer renderer;
     handler::RequestHandler handler(catalogue);
-    reader::JsonHandler json_handler(std::cin, handler, renderer);
+    router::TransportRouter transport_router;
+    reader::JsonHandler json_handler(std::cin, handler, renderer, transport_router);
 
     json_handler.ProcessInput();
     json_handler.ProcessOutput(std::cout);

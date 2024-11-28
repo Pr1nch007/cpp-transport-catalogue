@@ -97,13 +97,15 @@ int GetIdRequests(const json::Node& request) {
     return request.AsMap().at("id"s).AsInt();
 }
 
-JsonHandler::JsonHandler(istream& input, handler::RequestHandler& handler, map_renderer::MapRenderer& renderer) : 
-handler_(handler), renderer_(renderer) {
+JsonHandler::JsonHandler(istream& input, handler::RequestHandler& handler, map_renderer::MapRenderer& renderer, router::TransportRouter& router) : 
+handler_(handler), renderer_(renderer), router_(router) {
     document_ = json::Load(input);
     renderer_(ParseRenderSettings(document_));
 }
 
 void JsonHandler::ProcessInput(){
+    const auto& root_map = document_.GetRoot().AsMap();
+    
     for (const auto& request : GetBaseRequests()) {
         if (GetTypeRequests(request) == "Stop"s) {
             AddStop(request);
@@ -119,7 +121,10 @@ void JsonHandler::ProcessInput(){
             AddBus(request);
         }
     }
+    router::RoutingSettings routing_settings = ProcessRoutingSettings(root_map.at("routing_settings"s));
+    router_.Initialize(handler_.BuildGraph(routing_settings.bus_wait_time, routing_settings.bus_velocity), std::move(routing_settings));
 }
+
     
 void JsonHandler::ProcessRenderMap(std::ostream& output) {
     renderer_.RenderMap(handler_.GetAllStops(), handler_.GetAllBuses(), output);
@@ -134,6 +139,8 @@ void JsonHandler::ProcessOutput(std::ostream& output) {
             GetInfoBus(request, builder);
         } else if(GetTypeRequests(request) == "Stop"s) {
             GetInfoStop(request, builder);
+        } else if(GetTypeRequests(request) == "Route"s){
+            ProcessRouteRequest(request, builder);
         } else {
             RenderMapResponse(request, builder);
         }
@@ -243,4 +250,65 @@ void JsonHandler::RenderMapResponse(const json::Node& request, json::Builder& bu
            .EndDict();
 }
 
+    router::RoutingSettings JsonHandler::ProcessRoutingSettings(const json::Node& routing_settings) const {
+        const auto& settings_map = routing_settings.AsMap();
+        return {
+        settings_map.at("bus_wait_time"s).AsInt(),
+        settings_map.at("bus_velocity"s).AsDouble()
+        };
+    }
+    
+    void JsonHandler::ProcessRouteRequest(const json::Node& request, json::Builder& builder) {
+    const auto& from = request.AsMap().at("from"s).AsString();
+    const auto& to = request.AsMap().at("to"s).AsString();
+
+    if (!handler_.CheckStop(from) || !handler_.CheckStop(to)) {
+        builder.StartDict()
+            .Key("request_id"s).Value(request.AsMap().at("id"s).AsInt())
+            .Key("error_message"s).Value("not found"s)
+            .EndDict();
+        return;
+    }
+
+    auto route = router_.BuildRoute(handler_.FindStopIndex(from), handler_.FindStopIndex(to));
+    if (!route) {
+        builder.StartDict()
+            .Key("request_id"s).Value(request.AsMap().at("id"s).AsInt())
+            .Key("error_message"s).Value("not found"s)
+            .EndDict();
+        return;
+    }
+        
+    const auto& [full_time, edges] = *route;
+    builder.StartDict()
+        .Key("request_id"s).Value(request.AsMap().at("id"s).AsInt())
+        .Key("total_time"s).Value(full_time)
+        .Key("items"s).StartArray();
+
+    for (const auto& edge_id : edges) {
+        const auto& [index_from, 
+                     index_to, 
+                     time, 
+                     bus_name, 
+                     stop_count] = router_.GetEdge(edge_id);
+
+            builder.StartDict()
+            .Key("stop_name"s).Value(static_cast<std::string>(handler_.GetStopToIndex(index_from)))
+            .Key("time"s).Value(router_.GetRoutingSettings().bus_wait_time)
+            .Key("type"s).Value("Wait"s)
+            .EndDict();
+
+        double travel_time = time - router_.GetRoutingSettings().bus_wait_time;
+        builder.StartDict()
+            .Key("type"s).Value("Bus"s)
+            .Key("span_count"s).Value(stop_count)
+            .Key("time"s).Value(travel_time)
+            .Key("bus"s).Value(static_cast<std::string>(bus_name))
+            .EndDict();
+    }
+
+    builder.EndArray()
+        .EndDict();
+}
+    
 }
