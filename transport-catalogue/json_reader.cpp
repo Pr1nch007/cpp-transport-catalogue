@@ -97,11 +97,16 @@ int GetIdRequests(const json::Node& request) {
     return request.AsMap().at("id"s).AsInt();
 }
 
-JsonHandler::JsonHandler(istream& input, handler::RequestHandler& handler, map_renderer::MapRenderer& renderer, router::TransportRouter& router) : 
-handler_(handler), renderer_(renderer), router_(router) {
-    document_ = json::Load(input);
-    renderer_(ParseRenderSettings(document_));
-}
+JsonHandler::JsonHandler(std::istream& input, 
+                handler::RequestHandler& handler, 
+                map_renderer::MapRenderer& renderer, 
+                router::TransportRouter& router)
+        : handler_(handler), 
+          renderer_(renderer),
+          document_(json::Load(input)),
+          router_(router) {
+        renderer_(ParseRenderSettings(document_));
+    }
 
 void JsonHandler::ProcessInput(){
     const auto& root_map = document_.GetRoot().AsMap();
@@ -122,7 +127,8 @@ void JsonHandler::ProcessInput(){
         }
     }
     router::RoutingSettings routing_settings = ProcessRoutingSettings(root_map.at("routing_settings"s));
-    router_.Initialize(handler_.BuildGraph(routing_settings.bus_wait_time, routing_settings.bus_velocity), std::move(routing_settings));
+    router::TransportRouter temporary_router(handler_.GetCatalogue(), routing_settings);
+    router_ = std::move(temporary_router);
 }
 
     
@@ -270,7 +276,7 @@ void JsonHandler::RenderMapResponse(const json::Node& request, json::Builder& bu
         return;
     }
 
-    auto route = router_.BuildRoute(handler_.FindStopIndex(from), handler_.FindStopIndex(to));
+    auto route = router_.BuildRoute(from, to);
     if (!route) {
         builder.StartDict()
             .Key("request_id"s).Value(request.AsMap().at("id"s).AsInt())

@@ -1,6 +1,7 @@
 #include "transport_catalogue.h"
 
 #include <algorithm>
+#include <stdexcept>
 
 using namespace std;
 
@@ -9,6 +10,7 @@ namespace catalogue {
 void TransportCatalogue::AddStop(const Stop& stop_new) {
     stops_.push_back(move(stop_new));
     stop_quest_[stops_.back().name] = &stops_.back();
+    stop_to_index_[stops_.back().name] = stop_to_index_.empty() ? 0 : stop_quest_.size() - 1;
 }
 
 Stop* TransportCatalogue::FindStop(string_view name_stop) const {
@@ -120,36 +122,9 @@ std::set<Stop*> TransportCatalogue::GetStopsInRoutes() const {
         return bus_quest_;
     }
     
-graph::DirectedWeightedGraph<double> TransportCatalogue::BuildGraph(int bus_wait_time, double bus_velocity) {
-    graph::DirectedWeightedGraph<double> graph(stops_.size());
-
-    size_t index = 0;
-    for (const auto& stop : stops_) {
-        stop_to_index_[stop.name] = index++;
+const std::unordered_map<std::string_view, Stop*>& TransportCatalogue::GetAllStops() const {
+        return stop_quest_;
     }
-
-    for (const auto& [_, bus] : bus_quest_) {
-        const auto& stops = bus->stops;
-        for (size_t i = 0; i < stops.size(); ++i) {
-            int stop_count = 0;
-            double cumulative_distance = 0.0;
-            for (size_t j = i + 1; j < stops.size(); ++j) {
-                cumulative_distance += FindDistance(stops[j - 1]->name, stops[j]->name);
-                double travel_time = cumulative_distance / (bus_velocity * 1000 / 60);
-                ++stop_count;
-                graph.AddEdge({
-                    stop_to_index_.at(stops[i]->name),
-                    stop_to_index_.at(stops[j]->name),
-                    bus_wait_time + travel_time,
-                    _,
-                    stop_count
-                });
-            }
-        }
-    }
-
-    return graph;
-}
     
 size_t TransportCatalogue::FindStopIndex(const std::string& stop_name) const {
     auto it = stop_to_index_.find(stop_name);
@@ -161,6 +136,6 @@ size_t TransportCatalogue::FindStopIndex(const std::string& stop_name) const {
     
 std::string_view TransportCatalogue::GetStopToIndex (size_t id) const {
     return stops_[id].name;
-} 
+}
     
 }

@@ -51,7 +51,10 @@ int GetIdRequests(const json::Node& request);
 
 class JsonHandler {
 public:
-    JsonHandler(std::istream& input, handler::RequestHandler& handler, map_renderer::MapRenderer& renderer, router::TransportRouter& router);
+    JsonHandler(std::istream& input, 
+                handler::RequestHandler& handler, 
+                map_renderer::MapRenderer& renderer, 
+                router::TransportRouter& router);
 
     void ProcessInput();
     

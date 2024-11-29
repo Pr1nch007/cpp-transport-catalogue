@@ -10,7 +10,6 @@
 
 #include "transport_catalogue.h"
 #include "domain.h"
-#include "graph.h"
 
 namespace handler{
 
@@ -41,9 +40,7 @@ public:
 
     const std::map<std::string_view, domain::Bus*>& GetAllBuses() const;
     
-    size_t FindStopIndex(const std::string& stop_name) const;
-    
-    graph::DirectedWeightedGraph<double> BuildGraph(int bus_wait_time, double bus_velocity);
+    const catalogue::TransportCatalogue& GetCatalogue() const;
     
     std::string_view GetStopToIndex (size_t id);
 private:

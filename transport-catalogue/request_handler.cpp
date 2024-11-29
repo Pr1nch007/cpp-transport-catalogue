@@ -46,12 +46,8 @@ namespace handler{
         return catalogue_.GetAllBuses();
     }
     
-    size_t RequestHandler::FindStopIndex(const std::string& stop_name) const {
-        return catalogue_.FindStopIndex(stop_name);
-    }
-    
-    graph::DirectedWeightedGraph<double> RequestHandler::BuildGraph(int bus_wait_time, double bus_velocity) {
-        return catalogue_.BuildGraph(bus_wait_time, bus_velocity);
+    const catalogue::TransportCatalogue& RequestHandler::GetCatalogue() const {
+        return catalogue_;
     }
     
     std::string_view RequestHandler::GetStopToIndex (size_t id){
