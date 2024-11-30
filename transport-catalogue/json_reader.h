@@ -53,9 +53,8 @@ class JsonHandler {
 public:
     JsonHandler(std::istream& input, 
                 handler::RequestHandler& handler, 
-                map_renderer::MapRenderer& renderer, 
-                router::TransportRouter& router);
-
+                map_renderer::MapRenderer& renderer);
+    
     void ProcessInput();
     
     void ProcessRenderMap(std::ostream& output);
@@ -66,10 +65,11 @@ private:
     handler::RequestHandler& handler_;
     map_renderer::MapRenderer& renderer_;
     json::Document document_;
-    router::TransportRouter& router_;
+    std::unique_ptr<router::TransportRouter> router_;
     
     const json::Array& GetBaseRequests() const;
     const json::Array& GetStatRequests() const;
+    const json::Dict& GetRoutingSettings() const;
     
     void AddStop (const json::Node& request);
     void AddDistance(const json::Node& request);
@@ -80,7 +80,7 @@ private:
     
     void RenderMapResponse(const json::Node& request, json::Builder& builder);
     
-    router::RoutingSettings ProcessRoutingSettings(const json::Node& routing_settings) const;
+    router::RoutingSettings ProcessRoutingSettings(const json::Dict& routing_settings) const;
     
     void ProcessRouteRequest(const json::Node& request, json::Builder& builder);
 };

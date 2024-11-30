@@ -99,18 +99,16 @@ int GetIdRequests(const json::Node& request) {
 
 JsonHandler::JsonHandler(std::istream& input, 
                 handler::RequestHandler& handler, 
-                map_renderer::MapRenderer& renderer, 
-                router::TransportRouter& router)
+                map_renderer::MapRenderer& renderer)
         : handler_(handler), 
           renderer_(renderer),
-          document_(json::Load(input)),
-          router_(router) {
+          document_(json::Load(input)) {
         renderer_(ParseRenderSettings(document_));
+        ProcessInput();
+        router_ = std::make_unique<router::TransportRouter>(handler_.GetCatalogue(), ProcessRoutingSettings(GetRoutingSettings()));
     }
 
 void JsonHandler::ProcessInput(){
-    const auto& root_map = document_.GetRoot().AsMap();
-    
     for (const auto& request : GetBaseRequests()) {
         if (GetTypeRequests(request) == "Stop"s) {
             AddStop(request);
@@ -126,9 +124,6 @@ void JsonHandler::ProcessInput(){
             AddBus(request);
         }
     }
-    router::RoutingSettings routing_settings = ProcessRoutingSettings(root_map.at("routing_settings"s));
-    router::TransportRouter temporary_router(handler_.GetCatalogue(), routing_settings);
-    router_ = std::move(temporary_router);
 }
 
     
@@ -162,6 +157,10 @@ const json::Array& JsonHandler::GetBaseRequests() const {
 
 const json::Array& JsonHandler::GetStatRequests() const {
     return document_.GetRoot().AsMap().at("stat_requests"s).AsArray();
+}
+    
+const json::Dict& JsonHandler::GetRoutingSettings() const {
+    return document_.GetRoot().AsMap().at("routing_settings"s).AsMap();
 }
     
 void JsonHandler::AddStop (const json::Node& request) {
@@ -256,11 +255,10 @@ void JsonHandler::RenderMapResponse(const json::Node& request, json::Builder& bu
            .EndDict();
 }
 
-    router::RoutingSettings JsonHandler::ProcessRoutingSettings(const json::Node& routing_settings) const {
-        const auto& settings_map = routing_settings.AsMap();
+    router::RoutingSettings JsonHandler::ProcessRoutingSettings(const json::Dict& routing_settings) const {
         return {
-        settings_map.at("bus_wait_time"s).AsInt(),
-        settings_map.at("bus_velocity"s).AsDouble()
+        routing_settings.at("bus_wait_time"s).AsInt(),
+        routing_settings.at("bus_velocity"s).AsDouble()
         };
     }
     
@@ -276,7 +274,7 @@ void JsonHandler::RenderMapResponse(const json::Node& request, json::Builder& bu
         return;
     }
 
-    auto route = router_.BuildRoute(from, to);
+    auto route = router_->BuildRoute(from, to, handler_.GetCatalogue());
     if (!route) {
         builder.StartDict()
             .Key("request_id"s).Value(request.AsMap().at("id"s).AsInt())
@@ -291,20 +289,20 @@ void JsonHandler::RenderMapResponse(const json::Node& request, json::Builder& bu
         .Key("total_time"s).Value(full_time)
         .Key("items"s).StartArray();
 
-    for (const auto& edge_id : edges) {
+    for (const auto& edge : edges) {
         const auto& [index_from, 
                      index_to, 
                      time, 
                      bus_name, 
-                     stop_count] = router_.GetEdge(edge_id);
+                     stop_count] = edge;
 
             builder.StartDict()
             .Key("stop_name"s).Value(static_cast<std::string>(handler_.GetStopToIndex(index_from)))
-            .Key("time"s).Value(router_.GetRoutingSettings().bus_wait_time)
+            .Key("time"s).Value(router_->GetRoutingSettings().bus_wait_time)
             .Key("type"s).Value("Wait"s)
             .EndDict();
 
-        double travel_time = time - router_.GetRoutingSettings().bus_wait_time;
+        double travel_time = time - router_->GetRoutingSettings().bus_wait_time;
         builder.StartDict()
             .Key("type"s).Value("Bus"s)
             .Key("span_count"s).Value(stop_count)

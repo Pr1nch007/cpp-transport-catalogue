@@ -9,38 +9,35 @@
 
 namespace router {
 
+static constexpr double KM_TO_METERS = 1000.0;
+static constexpr double MINUTES_IN_HOUR = 60.0;    
+    
 struct RoutingSettings {
     int bus_wait_time = 0;
     double bus_velocity = 0.0;
 };
+    
+struct RouteInfo {
+    double full_time = 0.0;
+    std::vector<graph::Edge<double>> edges;
+};    
 
 class TransportRouter {
 public:
     TransportRouter() = default;
 
     TransportRouter(const catalogue::TransportCatalogue& catalogue, RoutingSettings settings);
-    
-    TransportRouter(const TransportRouter&) = delete;
-    TransportRouter& operator=(const TransportRouter&) = delete;
-    
-    TransportRouter(TransportRouter&& other) noexcept;
-    
-    TransportRouter& operator=(TransportRouter&& other) noexcept;
-
-    const graph::Edge<double>& GetEdge (size_t id) const;
 
     const RoutingSettings& GetRoutingSettings() const;
 
-    const std::optional<graph::Router<double>::RouteInfo> BuildRoute (const std::string& from, const std::string& to) const;
+    const std::optional<RouteInfo> BuildRoute (const std::string& from, const std::string& to, const catalogue::TransportCatalogue& catalogue) const ;
 
 private:
-    const catalogue::TransportCatalogue* catalogue_ = nullptr;
     RoutingSettings routing_settings_;
     graph::DirectedWeightedGraph<double> graph_;
     std::unique_ptr<graph::Router<double>> router_;
 
-    
-    void BuildGraph();
+    graph::DirectedWeightedGraph<double> BuildGraph(const catalogue::TransportCatalogue& catalogue) const;
 };
 
 }

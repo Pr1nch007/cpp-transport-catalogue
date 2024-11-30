@@ -10,10 +10,8 @@ int main(){
     catalogue::TransportCatalogue catalogue;
     map_renderer::MapRenderer renderer;
     handler::RequestHandler handler(catalogue);
-    router::TransportRouter transport_router;
-    reader::JsonHandler json_handler(std::cin, handler, renderer, transport_router);
+    reader::JsonHandler json_handler(std::cin, handler, renderer);
 
-    json_handler.ProcessInput();
     json_handler.ProcessOutput(std::cout);
     
     return 0;
