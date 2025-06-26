@@ -35,13 +35,11 @@ struct RenderSettings {
 
 class SphereProjector {
 public:
-    // points_begin и points_end задают начало и конец интервала элементов geo::Coordinates
     template <typename PointInputIt>
     SphereProjector(PointInputIt points_begin, PointInputIt points_end,
                     double max_width, double max_height, double padding)
-        : padding_(padding) //
+        : padding_(padding)
     {
-        // Если точки поверхности сферы не заданы, вычислять нечего
         if (points_begin == points_end) {
             return;
         }
